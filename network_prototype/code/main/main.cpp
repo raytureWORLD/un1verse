@@ -6,5 +6,4 @@ int main(int _argc, char** _argv) {
     (void)_argc; (void)_argv;
 
     Console::write_line("Running");
-
 }
