@@ -11,6 +11,9 @@
 #include"text/formatting.hpp"
 #include<span>
 
+/* Calling write() on memory range [nullptr, nullptr) should return the size of serialised data,
+but without actually writing the data.
+This is also true for class types */
 
 namespace Network {
     namespace Serialisation {

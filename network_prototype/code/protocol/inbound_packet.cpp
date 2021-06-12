@@ -5,6 +5,8 @@ Network::Protocol::Inbound_packet_reader::Inbound_packet_reader(std::span<std::b
     packet_data(_data), current_offset(0)
 { }
 
+
+
 Network::Protocol::Inbound_packet::Inbound_packet(std::unique_ptr<std::byte const[]>&& _data, std::size_t _data_length):
     data(std::move(_data)), data_length(_data_length)
 {
@@ -15,8 +17,8 @@ Network::Protocol::Inbound_packet::Inbound_packet(std::unique_ptr<std::byte cons
 
 Network::Protocol::Inbound_packet_reader Network::Protocol::Inbound_packet::get_reader() const {
     return {{
-        data.get() + sizeof(Protocol::Packet_length) + sizeof(Protocol::Packet_id),
-        data_length - sizeof(Protocol::Packet_length) + sizeof(Protocol::Packet_id)
+        data.get() + sizeof(Packet_length) + sizeof(Protocol::Packet_id),
+        data_length - sizeof(Packet_length) + sizeof(Protocol::Packet_id)
     }};
 }
 

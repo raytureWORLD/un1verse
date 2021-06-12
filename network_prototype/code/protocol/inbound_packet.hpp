@@ -49,8 +49,8 @@ namespace Network {
             explicit Inbound_packet(std::unique_ptr<std::byte const[]>&& _data, std::size_t _data_length);
 
             Inbound_packet_reader get_reader() const;
-            Protocol::Packet_length get_length() const noexcept;
-            Protocol::Packet_id get_id() const noexcept;
+            Packet_length get_length() const noexcept;
+            Packet_id get_id() const noexcept;
 
             ~Inbound_packet() = default;
 
@@ -63,8 +63,8 @@ namespace Network {
             std::unique_ptr<std::byte const[]> data;
             std::size_t data_length;
 
-            Protocol::Packet_length packet_length;
-            Protocol::Packet_id packet_id;
+            Packet_length packet_length;
+            Packet_id packet_id;
 
         };
 
