@@ -9,6 +9,7 @@
 
 
 #include"protocol/types.hpp"
+#include"serialisation/binary.hpp"
 #include<span>
 #include<cstddef>
 #include<memory>
@@ -18,21 +19,25 @@ namespace Network {
         class Inbound_packet_reader {
         public:
             /* Packet data without the header */
-            explicit Inbound_packet_reader(std::span<std::byte const> const& _data); 
+            Inbound_packet_reader(std::span<std::byte const> const& _data); 
 
             /* This does not include the header data */
             void read_next(auto& _value) {
-                //TODO
+                current_offset += Serialisation::Binary::read(
+                    _value,
+                    packet_data.data() + current_offset,
+                    packet_data.data() + packet_data.size()
+                );
             }
 
             ~Inbound_packet_reader() = default;
-            Inbound_packet_reader(Inbound_packet_reader const&) = delete;
+            Inbound_packet_reader(Inbound_packet_reader const&) = default;
             Inbound_packet_reader(Inbound_packet_reader&&) = default;
-            Inbound_packet_reader& operator=(Inbound_packet_reader const&) = delete;
+            Inbound_packet_reader& operator=(Inbound_packet_reader const&) = default;
             Inbound_packet_reader& operator=(Inbound_packet_reader&&) = default;
 
         private:
-            std::span<std::byte> packet_data;
+            std::span<std::byte const> packet_data;
             std::size_t current_offset;
 
         };
@@ -44,8 +49,8 @@ namespace Network {
             explicit Inbound_packet(std::unique_ptr<std::byte const[]>&& _data, std::size_t _data_length);
 
             Inbound_packet_reader get_reader() const;
-            Protocol::Packet_length get_length() const;
-            Protocol::Packet_id get_id() const;
+            Protocol::Packet_length get_length() const noexcept;
+            Protocol::Packet_id get_id() const noexcept;
 
             ~Inbound_packet() = default;
 
