@@ -5,7 +5,7 @@ OBJECTS_LIBRARIES = ${addprefix objects/, ${addsuffix .o, ${basename ${SOURCE_LI
 
 FLAGS = -std=c++20 -O3 -ggdb3 -rdynamic -fsanitize=thread
 WARNINGS = -Wall -Wextra -Wpedantic
-LINK = -lpthread -lboost_system
+LINK = -lpthread -ldl -lboost_system
 INCLUDE = -I code -I libraries
 
 main: ${OBJECTS} ${OBJECTS_LIBRARIES}
