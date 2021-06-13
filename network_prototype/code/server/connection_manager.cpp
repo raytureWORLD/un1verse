@@ -9,6 +9,7 @@ Network::Server::Connection_manager::Connection_manager(uint16_t _port_number, u
             this
         )
     ),
+    /* This overload sets reuse_address by default */
     acceptor(
         io_context,
         boost::asio::ip::tcp::endpoint(
@@ -25,7 +26,7 @@ Network::Server::Connection_manager::Connection_manager(uint16_t _port_number, u
 }
 
 Network::Server::Connection_manager::~Connection_manager() {
-
+    io_context.stop();
 }
 
 void Network::Server::Connection_manager::io_context_thread_function(std::stop_token _stop_token) {
@@ -36,6 +37,7 @@ void Network::Server::Connection_manager::io_context_thread_function(std::stop_t
     for(;;) {
         try {
             io_context.run();
+            if(io_context.stopped()) break;
         } catch(std::exception const&) {
             throw;
         }

@@ -8,12 +8,9 @@ int main(int _argc, char** _argv) {
 
 
     Console::write_line("Running");
-    for(;;) {
-        Server::Connection_manager cm(2345);
-
-        int x;
-        std::cin >> x;
-    }
+    Server::Connection_manager cm(2345);
+    int x;
+    std::cin >> x; /* This is just for testing, so the program won't exit immediately */
     Console::write_line("Done");
 
 

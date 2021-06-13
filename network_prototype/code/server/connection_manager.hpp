@@ -24,16 +24,16 @@ namespace Network {
             Connection_manager& operator=(Connection_manager&&) = delete;
 
         private:
-            boost::asio::io_context io_context;
+            boost::asio::io_context io_context; /* This is thread safe */
             std::jthread io_context_thread;
 
             boost::asio::ip::tcp::acceptor acceptor;
-            std::mutex acceptor_mx; /* This is almost certainly not needed */
+            mutable std::mutex acceptor_mx; /* This is almost certainly not needed */
 
             std::vector<boost::asio::ip::tcp::socket> accepted_sockets;
-            std::mutex accepted_sockets_mx;
+            mutable std::mutex accepted_sockets_mx;
 
-            unsigned packet_queue_capacity;
+            unsigned const packet_queue_capacity;
             std::queue<std::unique_ptr<Protocol::Inbound_packet>> inbound_packets_queue;
             std::queue<std::shared_ptr<Protocol::Outbound_packet>> outbound_packets_queue;
 
