@@ -2,6 +2,7 @@
 #define INCLUDED_IO_CONSOLE_HPP
 
 #include"text/formatting.hpp"
+#include<iostream>
 
 namespace Network {
     namespace Console {
