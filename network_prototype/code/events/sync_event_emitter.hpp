@@ -6,7 +6,6 @@
 #include<memory>
 #include<iterator>
 #include<vector>
-#include"events/events.hpp"
 
 namespace Network {
     namespace Internal {
