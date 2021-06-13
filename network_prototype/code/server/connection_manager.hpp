@@ -8,14 +8,42 @@
 #include<memory>
 #include<vector>
 #include<mutex>
+#include<unordered_map>
 #include"protocol/inbound_packet.hpp"
 #include"protocol/outbound_packet.hpp"
+#include"events/sync_event_emitter.hpp"
 
 namespace Network {
     namespace Server {
-        class Connection_manager {
+        struct Connection {
+            typedef unsigned Id;
+
+            boost::asio::ip::tcp::socket socket;
+            Id id;
+        };
+
+        /* TODO: This namespace should be directly inside Network */
+        namespace Events {
+            struct Connection_established {
+                Connection::Id id;
+                boost::asio::ip::address local_endpoint_address;
+                boost::asio::ip::port_type local_endpoint_port;
+                boost::asio::ip::address remote_endpoint_address;
+                boost::asio::ip::port_type remote_endpoint_port;
+            };
+        };
+
+
+        class Connection_manager: 
+            public Sync_event_emitter<
+                Events::Connection_established
+            > 
+        {
         public:
             explicit Connection_manager(uint16_t _port_number, unsigned _packet_queue_capacity = 32);
+
+            /* This is called synchronously, from the main thread */
+            void dispatch_all_sync_events();
 
             ~Connection_manager();
             Connection_manager(Connection_manager const&) = delete;
@@ -28,10 +56,13 @@ namespace Network {
             std::jthread io_context_thread;
 
             boost::asio::ip::tcp::acceptor acceptor;
-            mutable std::mutex acceptor_mx; /* This is almost certainly not needed */
 
+            /* These sockets should be synchronously moved into connections */
             std::vector<boost::asio::ip::tcp::socket> accepted_sockets;
             mutable std::mutex accepted_sockets_mx;
+
+            std::unordered_map<Connection::Id, Connection> connections;
+            Connection::Id next_connection_id;
 
             unsigned const packet_queue_capacity;
             std::queue<std::unique_ptr<Protocol::Inbound_packet>> inbound_packets_queue;

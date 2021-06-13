@@ -17,11 +17,43 @@ Network::Server::Connection_manager::Connection_manager(uint16_t _port_number, u
             _port_number
         )
     ),
+    next_connection_id(0),
     packet_queue_capacity(_packet_queue_capacity)
 {
+    acceptor.async_accept(std::bind_front(&Connection_manager::async_accept_callback, this));
+}
+
+
+void Network::Server::Connection_manager::dispatch_all_sync_events() {
+    /* Copy to avoid holding the mutex for too long */
+    std::vector<boost::asio::ip::tcp::socket> accepted_sockets_copy;
+    
     {
-        std::scoped_lock lock(acceptor_mx);
-        acceptor.async_accept(std::bind_front(&Connection_manager::async_accept_callback, this));
+        std::scoped_lock lock(accepted_sockets_mx);
+        accepted_sockets_copy = std::move(accepted_sockets);
+        accepted_sockets.clear();
+    }
+
+    for(auto& socket : accepted_sockets_copy) {
+        auto [iterator, success] = connections.emplace(
+            std::piecewise_construct,
+            std::forward_as_tuple(next_connection_id),
+            std::forward_as_tuple(std::move(socket), next_connection_id) 
+        );
+
+        auto const& connection = iterator->second;
+
+        Events::Connection_established event(
+            connection.id,
+            connection.socket.local_endpoint().address(),
+            connection.socket.local_endpoint().port(),
+            connection.socket.remote_endpoint().address(),
+            connection.socket.remote_endpoint().port()
+        );
+
+        post_event(event);
+        
+        ++next_connection_id;
     }
 }
 
@@ -29,7 +61,7 @@ Network::Server::Connection_manager::~Connection_manager() {
     io_context.stop();
 }
 
-void Network::Server::Connection_manager::io_context_thread_function(std::stop_token _stop_token) {
+void Network::Server::Connection_manager::io_context_thread_function([[maybe_unused]] std::stop_token _stop_token) {
     auto work = boost::asio::require(io_context.get_executor(), boost::asio::execution::outstanding_work.tracked);
 
     /* Exceptions thrown from handlers will be caught here */
@@ -49,12 +81,6 @@ void Network::Server::Connection_manager::async_accept_callback(
     boost::asio::ip::tcp::socket _peer_socket
 ) {
     if(!_error) {
-        Console::write_line(
-            "Connection from ", _peer_socket.remote_endpoint().address(), ":", _peer_socket.remote_endpoint().port(),
-            " accepted on ",
-            _peer_socket.local_endpoint().address(), ":", _peer_socket.local_endpoint().port()
-        );
-
         {
             std::scoped_lock lock(accepted_sockets_mx);
             accepted_sockets.emplace_back(std::move(_peer_socket));
@@ -63,8 +89,5 @@ void Network::Server::Connection_manager::async_accept_callback(
         throw std::runtime_error(_error.message());
     }
 
-    {
-        std::scoped_lock lock(acceptor_mx);
-        acceptor.async_accept(std::bind_front(&Connection_manager::async_accept_callback, this));
-    }
+    acceptor.async_accept(std::bind_front(&Connection_manager::async_accept_callback, this));
 }
