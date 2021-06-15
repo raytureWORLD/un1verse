@@ -19,6 +19,12 @@ namespace Network {
 
             Id const id;
 
+            boost::asio::ip::address const local_address;
+            boost::asio::ip::port_type const local_port;
+            boost::asio::ip::address const remote_address;
+            boost::asio::ip::port_type const remote_port;
+
+
             explicit Connection(Id _id, boost::asio::ip::tcp::socket&& _socket);
 
             /* This does not introduce a data race with the io_context thread */

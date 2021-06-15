@@ -27,8 +27,11 @@ namespace Network {
         public:
             explicit Connection_manager(unsigned short _port_number, unsigned _packet_queue_capacity = 32);
 
-            /* This is called synchronously, from the main thread */
             void tick();
+            void send_packet(
+                Connection::Id _connection,
+                std::shared_ptr<Protocol::Outbound_packet> _packet
+            );
 
             ~Connection_manager();
             Connection_manager(Connection_manager const&) = delete;
@@ -44,28 +47,14 @@ namespace Network {
             std::jthread io_context_thread;
             void io_context_thread_function(std::stop_token _stop_token);
 
+            Connection::Id next_connection_id;
+            std::unordered_map<Connection::Id, std::shared_ptr<Connection>> connections;
+
             Acceptor acceptor;
             void process_accepted_sockets();
 
-            std::vector<Events::Connection_killed> connection_killed_events;
-            mutable std::mutex connection_killed_events_mx;
-            void process_killed_connections();
-
-            std::vector<Events::Packet_received> packet_received_events;
-            mutable std::mutex packet_received_events_mx;
             void process_received_packets();
-            enum struct Async_read_operation_type { length, rest };
-            /* This does not allocate anything, length must be valid before the call */
-            void async_read(std::shared_ptr<Connection> const& _connection, Async_read_operation_type _operation);
-            void async_read_callback(
-                std::shared_ptr<Connection> _connection, /* copy */
-                Async_read_operation_type _operation, /* the operation that finished with this callback */
-                boost::system::error_code const& _error,
-                std::size_t _bytes_transferred
-            );
 
-            std::unordered_map<Connection::Id, std::shared_ptr<Connection>> connections;
-            Connection::Id next_connection_id;
         };
     }
 }

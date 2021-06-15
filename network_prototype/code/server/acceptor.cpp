@@ -2,6 +2,7 @@
 #include"text/formatting.hpp"
 
 Network::Server::Acceptor::Acceptor(boost::asio::io_context& _io_context, unsigned short _port):
+    /* This overload sets reuse_address by default */
     acceptor(_io_context, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), _port))
 { 
     async_accept();
@@ -18,12 +19,12 @@ std::vector<boost::asio::ip::tcp::socket> Network::Server::Acceptor::get_and_cle
         accepted_sockets.clear();
     }
 
-    return std::move(result);
+    return result;
 }
 
 
 void Network::Server::Acceptor::async_accept() {
-    acceptor.async_accept(std::bind_front(&async_accept_callback, this));
+    acceptor.async_accept(std::bind_front(&Acceptor::async_accept_callback, this));
 }
 
 
@@ -43,6 +44,6 @@ void Network::Server::Acceptor::async_accept_callback(
         );
     }
 
-    acceptor.async_accept(std::bind_front(&async_accept_callback, this));
+    async_accept();
 }
 

@@ -21,7 +21,7 @@ namespace Network {
 
             struct Packet_received {
                 Connection::Id const from;
-                std::unique_ptr<Protocol::Inbound_packet const> packet;
+                Protocol::Inbound_packet packet;
             };
         }
     }
