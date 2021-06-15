@@ -2,6 +2,7 @@
 #include"io/console.hpp"
 #include"server/connection_manager.hpp"
 
+
 int main(int _argc, char** _argv) {
     using namespace Network;
     (void)_argc; (void)_argv;
@@ -33,8 +34,8 @@ int main(int _argc, char** _argv) {
         [](Server::Events::Packet_received& _event) -> void {
             Console::write_line(
                 "Packet received from: ", _event.from, 
-                ". Packet length: ", _event.packet->get_length(),
-                ", Packet id: ", _event.packet->get_id()
+                ". Packet length: ", _event.packet.get_length(),
+                ", Packet id: ", _event.packet.get_id()
             );
         }
     );
