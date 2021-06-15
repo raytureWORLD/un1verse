@@ -2,7 +2,7 @@
 #include"io/console.hpp"
 #include<functional>
 
-Network::Server::Connection_manager::Connection_manager(uint16_t _port_number, unsigned _packet_queue_capacity):
+Network::Server::Connection_manager::Connection_manager(unsigned short _port_number, unsigned _packet_queue_capacity):
     packet_queue_capacity(_packet_queue_capacity),
     io_context_thread(
         std::bind_front(
@@ -51,47 +51,17 @@ void Network::Server::Connection_manager::io_context_thread_function(std::stop_t
     }
 }
 
-void Network::Server::Connection_manager::async_accept() {
-    acceptor.async_accept(std::bind_front(&Connection_manager::async_accept_callback, this));
-}
-
-void Network::Server::Connection_manager::async_accept_callback(
-    boost::system::error_code const& _error,
-    boost::asio::ip::tcp::socket _peer_socket
-) {
-    if(!_error) {
-        std::scoped_lock lock(accepted_sockets_mx);
-        accepted_sockets.emplace_back(std::move(_peer_socket));
-    } else {
-        throw std::runtime_error(
-            Text::concatenate(
-                "Network::Server::Connection_manager::async_accept_callback() error: ",
-                _error.message()
-            )
-        );
-    }
-
-    acceptor.async_accept(std::bind_front(&Connection_manager::async_accept_callback, this));
-}
-
-
 void Network::Server::Connection_manager::process_accepted_sockets() {
-    /* Copy to avoid holding the mutex for too long */
-    std::vector<boost::asio::ip::tcp::socket> accepted_sockets_copy;
-    {
-        std::scoped_lock lock(accepted_sockets_mx);
-        accepted_sockets_copy = std::move(accepted_sockets);
-        accepted_sockets.clear();
-    }
+    auto accepted_sockets = acceptor.get_and_clear_accepted_sockets();
 
-    for(auto& socket : accepted_sockets_copy) {
+    for(auto& socket : accepted_sockets) {
         auto [iterator, success] = connections.emplace(
             std::piecewise_construct,
             std::forward_as_tuple(next_connection_id),
             std::forward_as_tuple(
                 std::make_shared<Connection>(
-                    next_connection_id,
-                    std::move(socket)
+                    std::move(socket),
+                    next_connection_id
                 )
             )
         );
