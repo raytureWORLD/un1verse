@@ -21,6 +21,15 @@ int main(int _argc, char** _argv) {
     );
 
     cm.add_event_callback(
+        [](Server::Events::Connection_killed& _event) -> void {
+            Console::write_line(
+                "Connection with id ", _event.id, 
+                " killed, reason: ", _event.reason
+            );
+        }
+    );
+
+    cm.add_event_callback(
         [](Server::Events::Packet_received& _event) -> void {
             Console::write_line(
                 "Packet received from: ", _event.from, 
@@ -29,7 +38,6 @@ int main(int _argc, char** _argv) {
             );
         }
     );
-
 
     for(;;) {
         cm.tick();
