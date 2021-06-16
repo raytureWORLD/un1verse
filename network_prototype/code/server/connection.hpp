@@ -12,7 +12,7 @@
 #include"protocol/outbound_packet.hpp"
 
 namespace Network {
-    namespace Server {
+    namespace Server_impl {
         class Connection {
         public:
             typedef unsigned Id;
@@ -24,10 +24,7 @@ namespace Network {
             boost::asio::ip::address const remote_address;
             boost::asio::ip::port_type const remote_port;
 
-
-            explicit Connection(
-                Id _id, boost::asio::ip::tcp::socket&& _socket, boost::asio::io_context& _socket_io_context
-            );
+            explicit Connection(Id _id, boost::asio::ip::tcp::socket&& _socket);
 
             /* This does not introduce a data race with the io_context thread */
             std::vector<Protocol::Inbound_packet> get_and_clear_received_packets();
@@ -41,6 +38,7 @@ namespace Network {
 
         private:
             boost::asio::ip::tcp::socket socket;
+            mutable std::mutex socket_mx;
 
             Protocol::Packet_length next_inbound_packet_length;
             bool next_inbound_packet_length_valid; /* Whether length has already been written */
@@ -52,7 +50,6 @@ namespace Network {
 
             std::deque<std::shared_ptr<Protocol::Outbound_packet>> outbound_packets;
             mutable std::mutex outbound_packets_mx;
-            mutable std::condition_variable outbound_packets_cv;
 
             void async_read();
             void async_read_callback(

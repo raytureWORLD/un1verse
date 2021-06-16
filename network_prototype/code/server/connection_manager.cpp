@@ -2,7 +2,7 @@
 #include"io/console.hpp"
 #include<functional>
 
-Network::Server::Connection_manager::Connection_manager(unsigned short _port_number, unsigned _packet_queue_capacity):
+Network::Server_impl::Connection_manager::Connection_manager(unsigned short _port_number, unsigned _packet_queue_capacity):
     packet_queue_capacity(_packet_queue_capacity),
     io_context_thread(
         std::bind_front(
@@ -15,17 +15,17 @@ Network::Server::Connection_manager::Connection_manager(unsigned short _port_num
 { }
 
 
-Network::Server::Connection_manager::~Connection_manager() {
+Network::Server_impl::Connection_manager::~Connection_manager() {
     io_context.stop();
 }
 
 
-void Network::Server::Connection_manager::tick() {
+void Network::Server_impl::Connection_manager::tick() {
     process_accepted_sockets();
     process_received_packets();
 }
 
-void Network::Server::Connection_manager::send_packet(
+void Network::Server_impl::Connection_manager::send_packet(
     Connection::Id _connection,
     std::shared_ptr<Protocol::Outbound_packet> _packet
 ) {
@@ -34,13 +34,13 @@ void Network::Server::Connection_manager::send_packet(
         connection->second->send_packet(std::move(_packet));
     } else {
         throw std::runtime_error(Text::concatenate(
-            "Network::Server::Connection_manager::send_packet() error: ",
+            "Network::Server_impl::Connection_manager::send_packet() error: ",
             "no connection with id: ", _connection
         ));
     }
 }
 
-void Network::Server::Connection_manager::io_context_thread_function(std::stop_token _stop_token) {
+void Network::Server_impl::Connection_manager::io_context_thread_function(std::stop_token _stop_token) {
     (void)_stop_token;
 
     auto work = boost::asio::require(io_context.get_executor(), boost::asio::execution::outstanding_work.tracked);
@@ -58,7 +58,7 @@ void Network::Server::Connection_manager::io_context_thread_function(std::stop_t
 }
 
 
-void Network::Server::Connection_manager::process_accepted_sockets() {
+void Network::Server_impl::Connection_manager::process_accepted_sockets() {
     auto accepted_sockets = acceptor.get_and_clear_accepted_sockets();
 
     for(auto& socket : accepted_sockets) {
@@ -68,8 +68,7 @@ void Network::Server::Connection_manager::process_accepted_sockets() {
             std::forward_as_tuple(
                 std::make_shared<Connection>(
                     next_connection_id,
-                    std::move(socket),
-                    io_context
+                    std::move(socket)
                 )
             )
         );
@@ -88,7 +87,7 @@ void Network::Server::Connection_manager::process_accepted_sockets() {
 }
 
 
-void Network::Server::Connection_manager::process_received_packets() {
+void Network::Server_impl::Connection_manager::process_received_packets() {
     /* This is extremely slow... But good enough for now */
 
     for(auto& [id, connection] : connections) {

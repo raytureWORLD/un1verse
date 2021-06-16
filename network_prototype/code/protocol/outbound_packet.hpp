@@ -27,7 +27,7 @@ namespace Network {
                 );
                 
                 Serialisation::Binary::write(
-                    (Packet_length)data.size(), data.data() + prev_data_size, data.data() + data.size()
+                    (Packet_length)data.size(), data.data(), data.data() + data.size()
                 );
             }
 

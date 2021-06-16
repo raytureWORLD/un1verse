@@ -11,8 +11,9 @@ Network::Protocol::Inbound_packet::Inbound_packet(std::unique_ptr<std::byte cons
     data(std::move(_data)), data_length(_data_length)
 {
     std::byte const* data_ptr = data.get();
-    data_ptr += Serialisation::Binary::read(packet_length, data_ptr, data_ptr + data_length);
-    data_ptr += Serialisation::Binary::read(packet_id, data_ptr, data_ptr + data_length);
+    std::byte const* current_data_ptr = data.get();
+    current_data_ptr += Serialisation::Binary::read(packet_length, current_data_ptr, data_ptr + data_length);
+    current_data_ptr += Serialisation::Binary::read(packet_id, current_data_ptr, data_ptr + data_length);
 }
 
 Network::Protocol::Inbound_packet_reader Network::Protocol::Inbound_packet::get_reader() const {

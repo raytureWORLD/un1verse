@@ -1,7 +1,7 @@
 #include"server/acceptor.hpp"
 #include"text/formatting.hpp"
 
-Network::Server::Acceptor::Acceptor(boost::asio::io_context& _io_context, unsigned short _port):
+Network::Server_impl::Acceptor::Acceptor(boost::asio::io_context& _io_context, unsigned short _port):
     /* This overload sets reuse_address by default */
     acceptor(_io_context, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), _port))
 { 
@@ -9,7 +9,7 @@ Network::Server::Acceptor::Acceptor(boost::asio::io_context& _io_context, unsign
 } 
 
 
-std::vector<boost::asio::ip::tcp::socket> Network::Server::Acceptor::get_and_clear_accepted_sockets() {
+std::vector<boost::asio::ip::tcp::socket> Network::Server_impl::Acceptor::get_and_clear_accepted_sockets() {
     decltype(accepted_sockets) result;
 
     {
@@ -23,12 +23,12 @@ std::vector<boost::asio::ip::tcp::socket> Network::Server::Acceptor::get_and_cle
 }
 
 
-void Network::Server::Acceptor::async_accept() {
+void Network::Server_impl::Acceptor::async_accept() {
     acceptor.async_accept(std::bind_front(&Acceptor::async_accept_callback, this));
 }
 
 
-void Network::Server::Acceptor::async_accept_callback(
+void Network::Server_impl::Acceptor::async_accept_callback(
     boost::system::error_code const& _error,
     boost::asio::ip::tcp::socket _peer_socket
 ) {
@@ -38,7 +38,7 @@ void Network::Server::Acceptor::async_accept_callback(
     } else {
         throw std::runtime_error(
             Text::concatenate(
-                "Network::Server::Connection_manager::async_accept_callback() error: ",
+                "Network::Server_impl::Connection_manager::async_accept_callback() error: ",
                 _error.message()
             )
         );
