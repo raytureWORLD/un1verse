@@ -4,7 +4,19 @@
 
 Network::Server::Server(unsigned short _port):
     connection_manager(_port)
-{ }
+{ 
+    connection_manager.add_event_callback(
+        [this](Server_impl::Events::Connection_established& _event) -> void {
+            on_player_join(_event);
+        }
+    );
+
+    connection_manager.add_event_callback(
+        [this](Server_impl::Events::Packet_received& _event) -> void {
+            on_packet_received(_event);
+        }
+    );
+}
 
 
 void Network::Server::tick() {
@@ -51,6 +63,15 @@ void Network::Server::on_packet_received(Server_impl::Events::Packet_received& _
                 "Debug message received from ", _event.from, ": \"", message, "\", ",
                 "replying with: \"", message_reply, "\""
             );
+            break;
+        }
+
+        default: {
+            Console::write_line(
+                "Packet with invalid id (", _event.packet.get_id(), ") received from ", _event.from
+            );
+
+            break;
         }
     }
 }

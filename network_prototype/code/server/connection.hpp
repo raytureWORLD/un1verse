@@ -41,6 +41,7 @@ namespace Network {
 
         private:
             boost::asio::ip::tcp::socket socket;
+            mutable std::mutex socket_mx;
 
             Protocol::Packet_length next_inbound_packet_length;
             bool next_inbound_packet_length_valid; /* Whether length has already been written */
@@ -52,7 +53,6 @@ namespace Network {
 
             std::deque<std::shared_ptr<Protocol::Outbound_packet>> outbound_packets;
             mutable std::mutex outbound_packets_mx;
-            mutable std::condition_variable outbound_packets_cv;
 
             void async_read();
             void async_read_callback(

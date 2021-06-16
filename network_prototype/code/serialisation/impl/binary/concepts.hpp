@@ -4,6 +4,7 @@
 #include<type_traits>
 #include<cstddef>
 #include<concepts>
+#include"serialisation/impl/binary/specialisations.hpp"
 
 namespace Network {
     namespace Serialisation {

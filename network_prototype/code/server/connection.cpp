@@ -1,4 +1,5 @@
 #include"server/connection.hpp"
+#include"io/console.hpp"
 
 
 Network::Server_impl::Connection::Connection(
@@ -11,9 +12,6 @@ Network::Server_impl::Connection::Connection(
     remote_port(_socket.remote_endpoint().port()),
     socket(std::move(_socket)), next_inbound_packet_length_valid(false)
 { 
-    /* async_write() cannot be called here because the queue is empty and it would deadlock */
-    boost::asio::post(_socket_io_context, std::bind_front(&Connection::async_write, this));
-
     async_read();
 }
 
@@ -33,15 +31,16 @@ std::vector<Network::Protocol::Inbound_packet> Network::Server_impl::Connection:
 
 
 void Network::Server_impl::Connection::send_packet(std::shared_ptr<Protocol::Outbound_packet> _packet) {
-    {
-        std::scoped_lock lock(outbound_packets_mx);
-        outbound_packets.emplace_back(std::move(_packet));
-    }
-    outbound_packets_cv.notify_all();
+    std::scoped_lock lock(outbound_packets_mx);
+    outbound_packets.emplace_back(std::move(_packet));
+
+    async_write();
 }
 
 
 void Network::Server_impl::Connection::async_read() {
+    std::scoped_lock lock(socket_mx);
+
     if(!next_inbound_packet_length_valid) {
         /* read length */
 
@@ -107,16 +106,8 @@ void Network::Server_impl::Connection::async_read_callback(
 
 
 void Network::Server_impl::Connection::async_write() {
-    std::unique_lock lock(outbound_packets_mx);
-
-    outbound_packets_cv.wait(
-        lock,
-        [&]() -> bool {
-            return !outbound_packets.empty();
-        }
-    );
-
-    /* the lock is re-acquired here */
+    /* lock on outbound_packets_mx should be held in the calling function */
+    std::scoped_lock lock(socket_mx);
 
     std::span<std::byte const> buffer = outbound_packets.front()->get_data();
 
@@ -144,8 +135,6 @@ void Network::Server_impl::Connection::async_write_callback(
             std::scoped_lock lock(outbound_packets_mx);
             outbound_packets.pop_front();
         }
-
-        async_write();
     } else {
         throw std::runtime_error("TODO (in write callback)");
     }
