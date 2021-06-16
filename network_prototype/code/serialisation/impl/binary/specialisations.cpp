@@ -17,6 +17,7 @@ std::size_t Network::Serialisation::Binary::read(
 std::size_t Network::Serialisation::Binary::write(
         std::string const& _value, std::byte* _memory_begin, std::byte* _memory_end
 ) {
+    /* if range is null, no serialisation is done, only size is returned */
     return write(
         std::span<std::byte const>(reinterpret_cast<std::byte const*>(_value.c_str()), _value.length() + 1),
         _memory_begin, _memory_end

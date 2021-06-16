@@ -2,9 +2,7 @@
 #include"io/console.hpp"
 
 
-Network::Server_impl::Connection::Connection(
-        Id _id, boost::asio::ip::tcp::socket&& _socket, boost::asio::io_context& _socket_io_context
-):
+Network::Server_impl::Connection::Connection(Id _id, boost::asio::ip::tcp::socket&& _socket):
     id(_id), 
     local_address(_socket.local_endpoint().address()),
     local_port(_socket.local_endpoint().port()),
@@ -34,7 +32,7 @@ void Network::Server_impl::Connection::send_packet(std::shared_ptr<Protocol::Out
     std::scoped_lock lock(outbound_packets_mx);
     outbound_packets.emplace_back(std::move(_packet));
 
-    async_write();
+    async_write(); //TODO: This is UB!! Can't call socket.async_write() before the callback finishes
 }
 
 

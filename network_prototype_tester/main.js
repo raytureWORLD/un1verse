@@ -8,6 +8,7 @@ let server_port = 2345;
 
 console.log(`Attempting to connect to ${server_address}:${server_port}`);
 client.connect(server_port, server_address, on_connect);
+client.on("data", receive_message);
 
 
 function on_connect() {
@@ -29,6 +30,25 @@ function send_message() {
     client.write(message);
 }
 
+let header = new Array;
+let read_message = "";
+function receive_message(_data) {
+    for(let element of _data) {
+        if(header.length < 8) {
+            header.push(element);
+        } else {
+            if(element != 0) {
+                read_message += String.fromCharCode(element);
+            } else {
+                console.log(`Received: "${read_message}"`);
+
+                header = new Array;
+                read_message = "";
+            }
+        }
+    }
+}
+
 /* inclusive */
 function random_int(_min, _max) {
     return Math.floor(Math.random() * (_max - _min) + _min);
@@ -42,13 +62,21 @@ function random_string(_min, _max) {
     return result;
 }
 
-function encode_int(_input, _big_endian=false) {
-  const result = new Uint8Array(4);
-  let current = _input;
-  for (let i = 0; i < 4; ++i) {
-    result[_big_endian ? 3-i : i] = current & 0xFF;
-    current >>= 8;
-  }
-  return result;
+function encode_int(_input, _big_endian = false) {
+    const result = new Uint8Array(4);
+    let current = _input;
+    for (let i = 0; i < 4; ++i) {
+        result[_big_endian ? 3-i : i] = current & 0xFF;
+        current >>= 8;
+    }
+    return result;
+}
+
+function decode_int(_input, _big_endian = false) {
+    let result = 0;
+    for (let i = 0; i < 4; ++i) {
+        result += _input[_big_endian ? 3-i : i] << i;
+    }
+    return result;
 }
 

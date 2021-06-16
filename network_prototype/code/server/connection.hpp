@@ -24,10 +24,7 @@ namespace Network {
             boost::asio::ip::address const remote_address;
             boost::asio::ip::port_type const remote_port;
 
-
-            explicit Connection(
-                Id _id, boost::asio::ip::tcp::socket&& _socket, boost::asio::io_context& _socket_io_context
-            );
+            explicit Connection(Id _id, boost::asio::ip::tcp::socket&& _socket);
 
             /* This does not introduce a data race with the io_context thread */
             std::vector<Protocol::Inbound_packet> get_and_clear_received_packets();
