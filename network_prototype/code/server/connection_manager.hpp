@@ -16,7 +16,7 @@
 #include"server/acceptor.hpp"
 
 namespace Network {
-    namespace Server {
+    namespace Server_impl {
         class Connection_manager: 
             public Sync_event_emitter<
                 Events::Connection_established,

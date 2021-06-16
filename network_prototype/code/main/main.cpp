@@ -9,10 +9,10 @@ int main(int _argc, char** _argv) {
 
 
     Console::write_line("Running");
-    Server::Connection_manager cm(2345);
+    Server_impl::Connection_manager cm(2345);
 
     cm.add_event_callback(
-        [](Server::Events::Connection_established& _event) -> void {
+        [](Server_impl::Events::Connection_established& _event) -> void {
             Console::write_line(
                 "Connection from ", _event.remote_endpoint_address, ":", _event.remote_endpoint_port,
                 " accepted on ", _event.local_endpoint_address, ":", _event.local_endpoint_port,
@@ -22,7 +22,7 @@ int main(int _argc, char** _argv) {
     );
 
     cm.add_event_callback(
-        [](Server::Events::Connection_killed& _event) -> void {
+        [](Server_impl::Events::Connection_killed& _event) -> void {
             Console::write_line(
                 "Connection with id ", _event.id, 
                 " killed, reason: ", _event.reason
@@ -31,7 +31,7 @@ int main(int _argc, char** _argv) {
     );
 
     cm.add_event_callback(
-        [](Server::Events::Packet_received& _event) -> void {
+        [](Server_impl::Events::Packet_received& _event) -> void {
             Console::write_line(
                 "Packet received from: ", _event.from, 
                 ". Packet length: ", _event.packet.get_length(),

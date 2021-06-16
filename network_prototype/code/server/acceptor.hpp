@@ -6,7 +6,7 @@
 #include<mutex>
 
 namespace Network {
-    namespace Server {
+    namespace Server_impl {
         class Acceptor {
         public:
             explicit Acceptor(boost::asio::io_context& _io_context, unsigned short _port);

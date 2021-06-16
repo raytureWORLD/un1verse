@@ -4,7 +4,7 @@
 #include"server/connection.hpp"
 
 namespace Network {
-    namespace Server {
+    namespace Server_impl {
         namespace Events {
             struct Connection_established {
                 Connection::Id const id;

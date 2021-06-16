@@ -1,7 +1,7 @@
 #include"server/connection.hpp"
 
 
-Network::Server::Connection::Connection(
+Network::Server_impl::Connection::Connection(
         Id _id, boost::asio::ip::tcp::socket&& _socket, boost::asio::io_context& _socket_io_context
 ):
     id(_id), 
@@ -18,7 +18,7 @@ Network::Server::Connection::Connection(
 }
 
 
-std::vector<Network::Protocol::Inbound_packet> Network::Server::Connection::get_and_clear_received_packets() {
+std::vector<Network::Protocol::Inbound_packet> Network::Server_impl::Connection::get_and_clear_received_packets() {
     decltype(received_packets) result;
 
     {
@@ -32,7 +32,7 @@ std::vector<Network::Protocol::Inbound_packet> Network::Server::Connection::get_
 }
 
 
-void Network::Server::Connection::send_packet(std::shared_ptr<Protocol::Outbound_packet> _packet) {
+void Network::Server_impl::Connection::send_packet(std::shared_ptr<Protocol::Outbound_packet> _packet) {
     {
         std::scoped_lock lock(outbound_packets_mx);
         outbound_packets.emplace_back(std::move(_packet));
@@ -41,7 +41,7 @@ void Network::Server::Connection::send_packet(std::shared_ptr<Protocol::Outbound
 }
 
 
-void Network::Server::Connection::async_read() {
+void Network::Server_impl::Connection::async_read() {
     if(!next_inbound_packet_length_valid) {
         /* read length */
 
@@ -74,7 +74,7 @@ void Network::Server::Connection::async_read() {
 }
 
 
-void Network::Server::Connection::async_read_callback(
+void Network::Server_impl::Connection::async_read_callback(
     boost::system::error_code const& _error,
     std::size_t _bytes_transferred
 ) {
@@ -106,7 +106,7 @@ void Network::Server::Connection::async_read_callback(
 }
 
 
-void Network::Server::Connection::async_write() {
+void Network::Server_impl::Connection::async_write() {
     std::unique_lock lock(outbound_packets_mx);
 
     outbound_packets_cv.wait(
@@ -133,7 +133,7 @@ void Network::Server::Connection::async_write() {
     );
 }
 
-void Network::Server::Connection::async_write_callback(
+void Network::Server_impl::Connection::async_write_callback(
     boost::system::error_code const& _error,
     std::size_t _bytes_transferred
 ) {

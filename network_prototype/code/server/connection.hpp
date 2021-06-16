@@ -12,7 +12,7 @@
 #include"protocol/outbound_packet.hpp"
 
 namespace Network {
-    namespace Server {
+    namespace Server_impl {
         class Connection {
         public:
             typedef unsigned Id;
