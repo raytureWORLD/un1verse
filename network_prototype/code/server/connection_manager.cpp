@@ -68,7 +68,8 @@ void Network::Server::Connection_manager::process_accepted_sockets() {
             std::forward_as_tuple(
                 std::make_shared<Connection>(
                     next_connection_id,
-                    std::move(socket)
+                    std::move(socket),
+                    io_context
                 )
             )
         );
