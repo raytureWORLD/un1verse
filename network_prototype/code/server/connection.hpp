@@ -25,7 +25,9 @@ namespace Network {
             boost::asio::ip::port_type const remote_port;
 
 
-            explicit Connection(Id _id, boost::asio::ip::tcp::socket&& _socket);
+            explicit Connection(
+                Id _id, boost::asio::ip::tcp::socket&& _socket, boost::asio::io_context& _socket_io_context
+            );
 
             /* This does not introduce a data race with the io_context thread */
             std::vector<Protocol::Inbound_packet> get_and_clear_received_packets();
@@ -51,8 +53,6 @@ namespace Network {
             std::deque<std::shared_ptr<Protocol::Outbound_packet>> outbound_packets;
             mutable std::mutex outbound_packets_mx;
             mutable std::condition_variable outbound_packets_cv;
-
-            std::once_flag init_sending_packets_flag;
 
             void async_read();
             void async_read_callback(

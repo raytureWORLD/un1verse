@@ -1,7 +1,9 @@
 #include"server/connection.hpp"
 
 
-Network::Server::Connection::Connection(Id _id, boost::asio::ip::tcp::socket&& _socket):
+Network::Server::Connection::Connection(
+        Id _id, boost::asio::ip::tcp::socket&& _socket, boost::asio::io_context& _socket_io_context
+):
     id(_id), 
     local_address(_socket.local_endpoint().address()),
     local_port(_socket.local_endpoint().port()),
@@ -9,6 +11,9 @@ Network::Server::Connection::Connection(Id _id, boost::asio::ip::tcp::socket&& _
     remote_port(_socket.remote_endpoint().port()),
     socket(std::move(_socket)), next_inbound_packet_length_valid(false)
 { 
+    /* async_write() cannot be called here because the queue is empty and it would deadlock */
+    boost::asio::post(_socket_io_context, std::bind_front(&Connection::async_write, this));
+
     async_read();
 }
 
@@ -33,8 +38,6 @@ void Network::Server::Connection::send_packet(std::shared_ptr<Protocol::Outbound
         outbound_packets.emplace_back(std::move(_packet));
     }
     outbound_packets_cv.notify_all();
-
-    std::call_once(init_sending_packets_flag, &Connection::async_write, this);
 }
 
 
