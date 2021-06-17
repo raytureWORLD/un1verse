@@ -7,16 +7,22 @@ int main(int _argc, char** _argv) {
     using namespace Network;
     (void)_argc; (void)_argv;
 
-    Console::write_line("Starting");
+    Console::write_line("Initialising");
     
-    Server server(2345);
+    {
+        unsigned short port = 2345;
+        Server server(port);
 
-    for(;;) {
-        server.tick();
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        Console::write_line("Listening on 0.0.0.0:", port);
+
+        for(;;) {
+            server.tick();
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        }
+
+        Console::write_line("Terminating");
     }
 
-    Console::write_line("Done");
-
+    Console::write_line("Exiting");
 
 }

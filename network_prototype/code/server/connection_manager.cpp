@@ -17,12 +17,13 @@ Network::Server_impl::Connection_manager::Connection_manager(unsigned short _por
 
 Network::Server_impl::Connection_manager::~Connection_manager() {
     io_context.stop();
+    io_context_thread.join();
 }
 
 
 void Network::Server_impl::Connection_manager::tick() {
-    process_dead_connections();
     process_accepted_sockets();
+    process_dead_connections();
     process_received_packets();
 }
 
