@@ -32,7 +32,8 @@ void Network::Server_impl::Connection::send_packet(std::shared_ptr<Protocol::Out
     std::scoped_lock lock(outbound_packets_mx);
     outbound_packets.emplace_back(std::move(_packet));
 
-    async_write(); //TODO: This is UB!! Can't call socket.async_write() before the callback finishes
+    /* lock on outbound packets is held before entering this call */
+    if(outbound_packets.size() == 1) async_write();
 }
 
 
@@ -129,10 +130,11 @@ void Network::Server_impl::Connection::async_write_callback(
     (void)_bytes_transferred;
 
     if(!_error) {
-        {
-            std::scoped_lock lock(outbound_packets_mx);
-            outbound_packets.pop_front();
-        }
+        std::scoped_lock lock(outbound_packets_mx);
+        outbound_packets.pop_front();
+
+        /* lock on outbound packets is held before entering this call */
+        if(!outbound_packets.empty()) async_write();
     } else {
         throw std::runtime_error("TODO (in write callback)");
     }
