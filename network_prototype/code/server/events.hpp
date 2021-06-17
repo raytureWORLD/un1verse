@@ -1,7 +1,7 @@
 #ifndef INCLUDED_SERVER_EVENTS_HPP
 #define INCLUDED_SERVER_EVENTS_HPP
 
-#include"server/connection.hpp"
+#include"connection/connection.hpp"
 
 namespace Network {
     namespace Server_impl {
