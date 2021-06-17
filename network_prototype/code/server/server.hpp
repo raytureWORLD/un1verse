@@ -27,6 +27,7 @@ namespace Network {
 
         void on_player_join(Server_impl::Events::Connection_established& _event);
         void on_packet_received(Server_impl::Events::Packet_received& _event);
+        void on_connection_killed(Server_impl::Events::Connection_killed& _event);
 
     };
 }

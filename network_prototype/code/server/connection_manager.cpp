@@ -21,6 +21,7 @@ Network::Server_impl::Connection_manager::~Connection_manager() {
 
 
 void Network::Server_impl::Connection_manager::tick() {
+    process_dead_connections();
     process_accepted_sockets();
     process_received_packets();
 }
@@ -99,3 +100,22 @@ void Network::Server_impl::Connection_manager::process_received_packets() {
     }
 }
 
+
+void Network::Server_impl::Connection_manager::process_dead_connections() {
+    /* Extremely slow... */
+    for(auto it = std::begin(connections); it != std::end(connections);) {
+        auto& [id, connection] = *it;
+        if(connection->is_dead()) {
+            Events::Connection_killed event(
+                id,
+                connection->get_dead_reason()
+            );
+
+            post_event(event);
+
+            it = connections.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}

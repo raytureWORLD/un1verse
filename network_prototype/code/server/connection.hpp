@@ -6,14 +6,14 @@
 #include<memory>
 #include<string>
 #include<deque>
-#include<condition_variable>
+#include<atomic>
 #include<functional>
 #include"protocol/inbound_packet.hpp"
 #include"protocol/outbound_packet.hpp"
 
 namespace Network {
     namespace Server_impl {
-        class Connection {
+        class Connection: public std::enable_shared_from_this<Connection> {
         public:
             typedef unsigned Id;
 
@@ -26,11 +26,16 @@ namespace Network {
 
             explicit Connection(Id _id, boost::asio::ip::tcp::socket&& _socket);
 
-            /* This does not introduce a data race with the io_context thread */
+            /* These functions do not introduce a data race with the io_context thread */
             std::vector<Protocol::Inbound_packet> get_and_clear_received_packets();
             void send_packet(std::shared_ptr<Protocol::Outbound_packet> _packet);
 
-            ~Connection() = default;
+            bool is_dead() const;
+            /* This prevents move-semantics, but whatever */
+            /* Must only be called after is_dead() returns true, otherwise race condition */
+            std::string const& get_dead_reason() const;
+
+            ~Connection();
             Connection(Connection const&) = delete;
             Connection& operator=(Connection const&) = delete;
             Connection(Connection&&) = delete;
@@ -48,17 +53,25 @@ namespace Network {
             std::vector<Protocol::Inbound_packet> received_packets;
             mutable std::mutex received_packets_mx;
 
+            std::once_flag init_async_read_once_flag;
+
             std::deque<std::shared_ptr<Protocol::Outbound_packet>> outbound_packets;
             mutable std::mutex outbound_packets_mx;
 
+            std::atomic<bool> is_dead_;
+            /* This is protected by is_dead_ if is_dead_ is written to second */
+            std::string dead_reason; 
+
             void async_read();
             void async_read_callback(
+                std::shared_ptr<Connection>,
                 boost::system::error_code const& _error,
                 std::size_t _bytes_transferred
             );
 
             void async_write();
             void async_write_callback(
+                std::shared_ptr<Connection>,
                 boost::system::error_code const& _error,
                 std::size_t _bytes_transferred
             );
@@ -67,8 +80,6 @@ namespace Network {
     }
 }
 
-// socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both);
-// socket.close(); /* This cancels all outstanding async operations */
 
 
 #endif
