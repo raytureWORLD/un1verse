@@ -14,10 +14,14 @@ Network::Server_impl::Connection::Connection(Id _id, boost::asio::ip::tcp::socke
 { }
 
 Network::Server_impl::Connection::~Connection() {
-    socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both);
-    /* This cancels all outstanding async operations, even though none should be left by now, because
-    the destructor is called when the last shared_ptr is destroyed in the last callback to be executed */
-    socket.close(); 
+    try {
+        socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both);
+        /* This cancels all outstanding async operations, even though none should be left by now, because
+        the destructor is called when the last shared_ptr is destroyed in the last callback to be executed */
+        socket.close(); 
+    } catch(boost::system::system_error const&) {
+        /* ignore */
+    }
 }
 
 std::vector<Network::Protocol::Inbound_packet> Network::Server_impl::Connection::get_and_clear_received_packets() {
