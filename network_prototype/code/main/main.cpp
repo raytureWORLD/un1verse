@@ -7,22 +7,29 @@ int main(int _argc, char** _argv) {
     using namespace Network;
     (void)_argc; (void)_argv;
 
-    Console::write_line("Initialising");
-    
-    {
-        unsigned short port = 2345;
-        Server server(port);
+    if(_argc > 1) {
+        /* run in client mode - this is only for testing and to be removed */
 
-        Console::write_line("Listening on 0.0.0.0:", port);
+    } else {
+        /* run in server mode */
 
-        for(;;) {
-            server.tick();
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        Console::write_line("Initialising");
+        
+        {
+            unsigned short port = 2345;
+            Server server(port);
+
+            Console::write_line("Listening on 0.0.0.0:", port);
+
+            for(;;) {
+                server.tick();
+                std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            }
+
+            Console::write_line("Terminating");
         }
 
-        Console::write_line("Terminating");
+        Console::write_line("Exiting");
     }
-
-    Console::write_line("Exiting");
 
 }

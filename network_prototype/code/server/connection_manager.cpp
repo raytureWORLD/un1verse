@@ -2,8 +2,7 @@
 #include"io/console.hpp"
 #include<functional>
 
-Network::Server_impl::Connection_manager::Connection_manager(unsigned short _port_number, unsigned _packet_queue_capacity):
-    packet_queue_capacity(_packet_queue_capacity),
+Network::Server_impl::Connection_manager::Connection_manager(unsigned short _port_number):
     io_context_thread(
         std::bind_front(
             &Connection_manager::io_context_thread_function,

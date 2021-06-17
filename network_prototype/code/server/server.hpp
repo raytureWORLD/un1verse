@@ -19,11 +19,11 @@ namespace Network {
 
     private:
         struct Player {
-            Server_impl::Connection::Id connection_id;
+            Connection::Id connection_id;
         };
 
         Server_impl::Connection_manager connection_manager;
-        std::unordered_map<Server_impl::Connection::Id, Player> players;
+        std::unordered_map<Connection::Id, Player> players;
 
         void on_player_join(Server_impl::Events::Connection_established& _event);
         void on_packet_received(Server_impl::Events::Packet_received& _event);

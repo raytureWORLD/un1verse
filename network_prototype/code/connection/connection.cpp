@@ -2,7 +2,7 @@
 #include"io/console.hpp"
 
 
-Network::Server_impl::Connection::Connection(Id _id, boost::asio::ip::tcp::socket&& _socket):
+Network::Connection::Connection(Id _id, boost::asio::ip::tcp::socket&& _socket):
     id(_id), 
     local_address(_socket.local_endpoint().address()),
     local_port(_socket.local_endpoint().port()),
@@ -13,7 +13,7 @@ Network::Server_impl::Connection::Connection(Id _id, boost::asio::ip::tcp::socke
     is_dead_(false)
 { }
 
-Network::Server_impl::Connection::~Connection() {
+Network::Connection::~Connection() {
     try {
         socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both);
         /* This cancels all outstanding async operations, even though none should be left by now, because
@@ -24,7 +24,7 @@ Network::Server_impl::Connection::~Connection() {
     }
 }
 
-std::vector<Network::Protocol::Inbound_packet> Network::Server_impl::Connection::get_and_clear_received_packets() {
+std::vector<Network::Protocol::Inbound_packet> Network::Connection::get_and_clear_received_packets() {
     decltype(received_packets) result;
 
     if(is_dead_.load()) return result;
@@ -46,7 +46,7 @@ std::vector<Network::Protocol::Inbound_packet> Network::Server_impl::Connection:
 }
 
 
-void Network::Server_impl::Connection::send_packet(std::shared_ptr<Protocol::Outbound_packet> _packet) {
+void Network::Connection::send_packet(std::shared_ptr<Protocol::Outbound_packet> _packet) {
     if(is_dead_.load()) return;
 
     std::scoped_lock lock(outbound_packets_mx);
@@ -56,15 +56,15 @@ void Network::Server_impl::Connection::send_packet(std::shared_ptr<Protocol::Out
     if(outbound_packets.size() == 1) async_write();
 }
 
-bool Network::Server_impl::Connection::is_dead() const {
+bool Network::Connection::is_dead() const {
     return is_dead_.load();
 }
 
-std::string const& Network::Server_impl::Connection::get_dead_reason() const {
+std::string const& Network::Connection::get_dead_reason() const {
     return dead_reason;
 }
 
-void Network::Server_impl::Connection::async_read() {
+void Network::Connection::async_read() {
     std::scoped_lock lock(socket_mx);
 
     if(!next_inbound_packet_length_valid) {
@@ -101,7 +101,7 @@ void Network::Server_impl::Connection::async_read() {
 }
 
 
-void Network::Server_impl::Connection::async_read_callback(
+void Network::Connection::async_read_callback(
     std::shared_ptr<Connection>,
     boost::system::error_code const& _error,
     std::size_t _bytes_transferred
@@ -137,7 +137,7 @@ void Network::Server_impl::Connection::async_read_callback(
 }
 
 
-void Network::Server_impl::Connection::async_write() {
+void Network::Connection::async_write() {
     /* lock on outbound_packets_mx should be held in the calling function */
     std::scoped_lock lock(socket_mx);
 
@@ -157,7 +157,7 @@ void Network::Server_impl::Connection::async_write() {
     );
 }
 
-void Network::Server_impl::Connection::async_write_callback(
+void Network::Connection::async_write_callback(
     std::shared_ptr<Connection>,
     boost::system::error_code const& _error,
     std::size_t _bytes_transferred
