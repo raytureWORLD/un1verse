@@ -8,14 +8,28 @@ Network::Server_impl::Connection::Connection(Id _id, boost::asio::ip::tcp::socke
     local_port(_socket.local_endpoint().port()),
     remote_address(_socket.remote_endpoint().address()),
     remote_port(_socket.remote_endpoint().port()),
-    socket(std::move(_socket)), next_inbound_packet_length_valid(false)
-{ 
-    async_read();
-}
+    socket(std::move(_socket)), 
+    next_inbound_packet_length_valid(false),
+    is_dead_(false)
+{ }
 
+Network::Server_impl::Connection::~Connection() {
+    socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both);
+    /* This cancels all outstanding async operations, even though none should be left by now, because
+    the destructor is called when the last shared_ptr is destroyed in the last callback to be executed */
+    socket.close(); 
+}
 
 std::vector<Network::Protocol::Inbound_packet> Network::Server_impl::Connection::get_and_clear_received_packets() {
     decltype(received_packets) result;
+
+    if(is_dead_.load()) return result;
+
+    std::call_once(
+        init_async_read_once_flag, 
+        &Connection::async_read, 
+        this
+    );
 
     {
         std::scoped_lock lock(received_packets_mx);
@@ -29,12 +43,22 @@ std::vector<Network::Protocol::Inbound_packet> Network::Server_impl::Connection:
 
 
 void Network::Server_impl::Connection::send_packet(std::shared_ptr<Protocol::Outbound_packet> _packet) {
+    if(is_dead_.load()) return;
+
     std::scoped_lock lock(outbound_packets_mx);
     outbound_packets.emplace_back(std::move(_packet));
 
-    async_write(); //TODO: This is UB!! Can't call socket.async_write() before the callback finishes
+    /* lock on outbound packets is held before entering this call */
+    if(outbound_packets.size() == 1) async_write();
 }
 
+bool Network::Server_impl::Connection::is_dead() const {
+    return is_dead_.load();
+}
+
+std::string const& Network::Server_impl::Connection::get_dead_reason() const {
+    return dead_reason;
+}
 
 void Network::Server_impl::Connection::async_read() {
     std::scoped_lock lock(socket_mx);
@@ -50,7 +74,8 @@ void Network::Server_impl::Connection::async_read() {
             ),
             std::bind_front(
                 &Connection::async_read_callback,
-                this
+                this,
+                shared_from_this()
             )
         );
     } else {
@@ -64,7 +89,8 @@ void Network::Server_impl::Connection::async_read() {
             ),
             std::bind_front(
                 &Connection::async_read_callback,
-                this
+                this,
+                shared_from_this()
             )
         );
     }
@@ -72,10 +98,13 @@ void Network::Server_impl::Connection::async_read() {
 
 
 void Network::Server_impl::Connection::async_read_callback(
+    std::shared_ptr<Connection>,
     boost::system::error_code const& _error,
     std::size_t _bytes_transferred
 ) {
     (void)_bytes_transferred;
+
+    if(is_dead_.load()) return;
 
     if(!_error) {
         if(!next_inbound_packet_length_valid) {
@@ -98,7 +127,8 @@ void Network::Server_impl::Connection::async_read_callback(
 
         }
     } else {
-        throw std::runtime_error("TODO (in read callback)");
+        dead_reason = _error.message();
+        is_dead_.store(true);
     }
 }
 
@@ -117,24 +147,30 @@ void Network::Server_impl::Connection::async_write() {
         ),
         std::bind_front(
             &Connection::async_write_callback,
-            this
+            this,
+            shared_from_this()
         )
     );
 }
 
 void Network::Server_impl::Connection::async_write_callback(
+    std::shared_ptr<Connection>,
     boost::system::error_code const& _error,
     std::size_t _bytes_transferred
 ) {
     (void)_bytes_transferred;
 
+    if(is_dead_.load()) return;
+
     if(!_error) {
-        {
-            std::scoped_lock lock(outbound_packets_mx);
-            outbound_packets.pop_front();
-        }
+        std::scoped_lock lock(outbound_packets_mx);
+        outbound_packets.pop_front();
+
+        /* lock on outbound packets is held before entering this call */
+        if(!outbound_packets.empty()) async_write();
     } else {
-        throw std::runtime_error("TODO (in write callback)");
+        dead_reason = _error.message();
+        is_dead_.store(true);
     }
 }
 

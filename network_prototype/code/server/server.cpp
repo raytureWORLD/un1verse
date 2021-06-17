@@ -16,6 +16,12 @@ Network::Server::Server(unsigned short _port):
             on_packet_received(_event);
         }
     );
+
+    connection_manager.add_event_callback(
+        [this](Server_impl::Events::Connection_killed& _event) -> void {
+            on_connection_killed(_event);
+        }
+    );
 }
 
 
@@ -74,4 +80,13 @@ void Network::Server::on_packet_received(Server_impl::Events::Packet_received& _
             break;
         }
     }
+}
+
+
+void Network::Server::on_connection_killed(Server_impl::Events::Connection_killed& _event) {
+    players.erase(_event.id);
+
+    Console::write_line(
+        "Connection with id ", _event.id, " terminated, reason: ", _event.reason
+    );
 }

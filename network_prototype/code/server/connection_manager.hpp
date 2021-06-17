@@ -51,9 +51,10 @@ namespace Network {
             std::unordered_map<Connection::Id, std::shared_ptr<Connection>> connections;
 
             Acceptor acceptor;
-            void process_accepted_sockets();
 
+            void process_accepted_sockets();
             void process_received_packets();
+            void process_dead_connections();
 
         };
     }
