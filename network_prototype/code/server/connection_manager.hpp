@@ -25,7 +25,7 @@ namespace Network {
             > 
         {
         public:
-            explicit Connection_manager(unsigned short _port_number, unsigned _packet_queue_capacity = 32);
+            explicit Connection_manager(unsigned short _port_number);
 
             void tick();
             void send_packet(
@@ -40,9 +40,6 @@ namespace Network {
             Connection_manager& operator=(Connection_manager&&) = delete;
 
         private:
-            /* Max size of send and receive packet queues for connections */
-            unsigned const packet_queue_capacity;
-
             boost::asio::io_context io_context; /* This is thread safe */
             std::jthread io_context_thread;
             void io_context_thread_function(std::stop_token _stop_token);
