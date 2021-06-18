@@ -1,0 +1,13 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "4.25",
+	"Category": "",
+	"Description": "",
+	"Modules": [
+		{
+			"Name": "un1verse_ntwrk_dmo",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}
