@@ -3,20 +3,30 @@
 
 #include"connection/connection.hpp"
 #include"client/connection_manager.hpp"
+#include"client/user_events.hpp"
 #include<future>
 #include<functional>
 #include<string_view>
 
 
 namespace Network {
-    class Client {
+    class Client: 
+        public Sync_event_emitter<
+            Events::Connection_lost,
+            Events::Connect_result,
+            Events::Auth_result,
+            Events::Player_status_change
+        > 
+    {
     public:
-        explicit Client() = default;
+        explicit Client();
 
+        void tick();
 
-        // void tick();
+        void connect(std::string_view const& _host, std::string_view const& _service);
+        void authenticate(std::string_view const& _username);
 
-        ~Client();
+        ~Client() = default;
         Client(Client const&) = delete;
         Client& operator=(Client const&) = delete;
         Client(Client&&) = delete;
@@ -24,6 +34,8 @@ namespace Network {
 
     private:
         Client_impl::Connection_manager connection_manager;
+
+        void process_received_packet(Protocol::Inbound_packet& _packet);
 
     };
 }

@@ -1,5 +1,6 @@
 #include"server/connection_manager.hpp"
 #include"io/console.hpp"
+#include"protocol/packet_ids.hpp"
 #include<functional>
 
 Network::Server_impl::Connection_manager::Connection_manager(unsigned short _port_number):
@@ -84,6 +85,19 @@ void Network::Server_impl::Connection_manager::process_accepted_sockets() {
         );
 
         post_event(event);
+
+        auto status_change_packet = std::make_shared<Protocol::Outbound_packet>(
+            Protocol::Packet_ids::connection_state_change
+        );
+
+        status_change_packet->write_next((uint8_t)0);
+        status_change_packet->write_next(iterator->second->id);
+
+        for(auto& [id, connection] : connections) {
+            if(id != iterator->second->id) {
+                connection->send_packet(status_change_packet);
+            }
+        }
     }
 }
 
@@ -112,6 +126,19 @@ void Network::Server_impl::Connection_manager::process_dead_connections() {
             );
 
             post_event(event);
+
+            auto status_change_packet = std::make_shared<Protocol::Outbound_packet>(
+                Protocol::Packet_ids::connection_state_change
+            );
+
+            status_change_packet->write_next((uint8_t)1);
+            status_change_packet->write_next(id);
+
+            for(auto& [id_, connection_] : connections) {
+                if(id_ != id) {
+                    connection_->send_packet(status_change_packet);
+                }
+            }
 
             it = connections.erase(it);
         } else {
