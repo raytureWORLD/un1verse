@@ -26,6 +26,21 @@ int main(int _argc, char** _argv) {
                 }
             }
         ); 
+        client.add_event_callback(
+            [](Events::Player_status_change& _event) {
+                switch(_event.status) {
+                    case Events::Player_status_change::Status::connected: {
+                        Console::write_line("Player with id ", _event.id, " connects to the server");
+                        break;
+                    }
+
+                    case Events::Player_status_change::Status::disconnected: {
+                        Console::write_line("Player with id ", _event.id, " disconnects the server");
+                        break;
+                    }
+                }
+            }
+        ); 
 
         Console::write_line("Attempting to connect to ", host, ":", service);
 

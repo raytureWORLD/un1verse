@@ -14,7 +14,8 @@ namespace Network {
         public Sync_event_emitter<
             Events::Connection_lost,
             Events::Connect_result,
-            Events::Auth_result
+            Events::Auth_result,
+            Events::Player_status_change
         > 
     {
     public:
@@ -33,6 +34,8 @@ namespace Network {
 
     private:
         Client_impl::Connection_manager connection_manager;
+
+        void process_received_packet(Protocol::Inbound_packet& _packet);
 
     };
 }

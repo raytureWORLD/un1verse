@@ -6,6 +6,7 @@
    Connection_manager and are used only internally */
 
 #include<string>
+#include"connection/connection.hpp"
 
 namespace Network {
     namespace Events {
@@ -21,6 +22,11 @@ namespace Network {
 
         struct Connection_lost {
             std::string error_message;
+        };
+
+        struct Player_status_change {
+            Connection::Id const id;
+            enum struct Status { connected, disconnected } const status;
         };
 
     }

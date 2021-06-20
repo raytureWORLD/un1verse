@@ -7,8 +7,12 @@ namespace Network {
     namespace Protocol {
         namespace Packet_ids {
             enum: Packet_id {
-                /* null-terminated string */
+                /* string: message */
                 debug_message = 1 << 0,
+
+                /* uint8: status (0 - connected, 1 - disconnected)
+                connection_id: id of the connection */
+                connection_state_change = 1 << 1,
             };
         }
     }

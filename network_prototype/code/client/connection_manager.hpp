@@ -11,7 +11,8 @@ namespace Network {
     namespace Client_impl {
         class Connection_manager:
             public Sync_event_emitter<
-                Events::Connect_result
+                Events::Connect_result,
+                Events::Packet_received
             > 
         {
         public:
@@ -37,7 +38,11 @@ namespace Network {
             std::optional<Events::Connect_result> connect_result;
             bool connect_in_progress;
 
-            std::unique_ptr<Connection> connection;
+            /* must be a shared_ptr because callbacks need shared_from_this() */
+            std::shared_ptr<Connection> connection;
+            bool connection_established;
+
+            void process_received_packets();
         };
     }
 }

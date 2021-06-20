@@ -10,6 +10,10 @@ namespace Network {
                 bool const success;
                 std::string error_message;
             };
+
+            struct Packet_received {
+                Protocol::Inbound_packet packet;
+            };
         }
     }
 }

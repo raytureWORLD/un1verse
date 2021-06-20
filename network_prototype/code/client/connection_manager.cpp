@@ -10,7 +10,8 @@ Network::Client_impl::Connection_manager::Connection_manager():
         )
     ),
     resolver(io_context),
-    connect_in_progress(false)
+    connect_in_progress(false),
+    connection_established(false)
 { }
 
 Network::Client_impl::Connection_manager::~Connection_manager() {
@@ -37,7 +38,7 @@ void Network::Client_impl::Connection_manager::async_connect(
 
                     /* The connection id is unused */
                     /* This is safe but connection must NEVER be accessed before connect_result.success is true */
-                    connection = std::make_unique<Connection>(0, std::move(socket));
+                    connection = std::make_shared<Connection>(0, std::move(socket));
 
                     {
                         std::scoped_lock lock(connect_result_mx);
@@ -63,9 +64,17 @@ void Network::Client_impl::Connection_manager::tick() {
         std::scoped_lock lock(connect_result_mx);
 
         if(connect_result) {
+            if(connect_result->success) {
+                connection_established = true;
+            }
+
             connect_in_progress = false;
             post_event(*connect_result);
         }
+    }
+
+    if(connection_established) {
+        process_received_packets();
     }
 }
 
@@ -85,3 +94,13 @@ void Network::Client_impl::Connection_manager::io_context_thread_function(std::s
         }
     }
 }
+
+void Network::Client_impl::Connection_manager::process_received_packets() {
+    auto packets = connection->get_and_clear_received_packets();
+    for(auto& packet : packets) {
+        Events::Packet_received event(std::move(packet));
+        post_event(event);
+    }
+}
+
+
