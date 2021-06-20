@@ -10,7 +10,7 @@ Network::Client_impl::Connection_manager::Connection_manager():
         )
     ),
     resolver(io_context),
-    connection_established(false)
+    connect_in_progress(false)
 { }
 
 Network::Client_impl::Connection_manager::~Connection_manager() {
@@ -21,6 +21,8 @@ Network::Client_impl::Connection_manager::~Connection_manager() {
 void Network::Client_impl::Connection_manager::async_connect(
         std::string_view const& _host, std::string_view const& _service
 ) {
+    connect_in_progress = true;
+
     resolver.async_resolve(
         boost::asio::string_view(_host), boost::asio::string_view(_service),
         [this](
@@ -57,14 +59,11 @@ void Network::Client_impl::Connection_manager::async_connect(
 
 
 void Network::Client_impl::Connection_manager::tick() {
-    if(!connection_established) {
+    if(connect_in_progress) {
         std::scoped_lock lock(connect_result_mx);
 
         if(connect_result) {
-            if(connect_result->success) {
-                connection_established = true;
-            }
-
+            connect_in_progress = false;
             post_event(*connect_result);
         }
     }

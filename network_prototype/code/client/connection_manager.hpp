@@ -35,10 +35,9 @@ namespace Network {
             boost::asio::ip::tcp::resolver resolver;
             mutable std::mutex connect_result_mx;
             std::optional<Events::Connect_result> connect_result;
+            bool connect_in_progress;
 
             std::unique_ptr<Connection> connection;
-            /* This is set synchronously in tick(), so that connection does't need a mutex */
-            bool connection_established;
         };
     }
 }
