@@ -8,7 +8,7 @@ namespace Network {
         namespace Events {
             struct Connect_result {
                 bool const success;
-                std::string const error_message;
+                std::string error_message;
             };
         }
     }

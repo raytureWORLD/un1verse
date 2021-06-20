@@ -1,4 +1,5 @@
 #include"client/connection_manager.hpp"
+#include"io/console.hpp"
 
 
 Network::Client_impl::Connection_manager::Connection_manager():
@@ -8,7 +9,8 @@ Network::Client_impl::Connection_manager::Connection_manager():
             this
         )
     ),
-    resolver(io_context)
+    resolver(io_context),
+    connection_established(false)
 { }
 
 Network::Client_impl::Connection_manager::~Connection_manager() {
@@ -66,8 +68,6 @@ void Network::Client_impl::Connection_manager::tick() {
             post_event(*connect_result);
         }
     }
-
-
 }
 
 void Network::Client_impl::Connection_manager::io_context_thread_function(std::stop_token _stop_token) {
