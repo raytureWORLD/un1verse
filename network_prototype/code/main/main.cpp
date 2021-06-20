@@ -14,6 +14,8 @@ int main(int _argc, char** _argv) {
         Console::write_line("Initialising");
         Console::write_line("Running in client mode");
 
+        bool loop = true;
+
         std::string host = "127.0.0.1", service = "2345";        
 
         Client client;
@@ -24,6 +26,12 @@ int main(int _argc, char** _argv) {
                 } else {
                     Console::write_line("Connection could not be established: ", _event.error_message);
                 }
+            }
+        ); 
+        client.add_event_callback(
+            [&](Events::Connection_lost& _event) {
+                Console::write_line("Connection to the server lost: ", _event.error_message);
+                loop = false;
             }
         ); 
         client.add_event_callback(
@@ -46,10 +54,12 @@ int main(int _argc, char** _argv) {
 
         client.connect(host, service);
 
-        for(;;) {
+        while(loop) {
             client.tick();
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
         }
+
+        Console::write_line("Done, exiting");
 
     } else {
         /* run in server mode */

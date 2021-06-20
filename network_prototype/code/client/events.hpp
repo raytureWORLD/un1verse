@@ -14,6 +14,10 @@ namespace Network {
             struct Packet_received {
                 Protocol::Inbound_packet packet;
             };
+
+            struct Connection_lost {
+                std::string error_message;
+            };
         }
     }
 }

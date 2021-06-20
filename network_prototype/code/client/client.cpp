@@ -15,10 +15,22 @@ Network::Client::Client() {
     );
 
     connection_manager.add_event_callback(
+        [this](Client_impl::Events::Connection_lost& _event) -> void {
+            post_event(
+                Events::Connection_lost(
+                    std::move(_event.error_message)
+                )
+            );
+        }
+    );
+
+    connection_manager.add_event_callback(
         [this](Client_impl::Events::Packet_received& _event) -> void {
             process_received_packet(_event.packet);
         }
     );
+
+
 }
 
 void Network::Client::connect(std::string_view const& _host, std::string_view const& _service) {

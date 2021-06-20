@@ -74,6 +74,13 @@ void Network::Client_impl::Connection_manager::tick() {
     }
 
     if(connection_established) {
+        if(connection->is_dead()) {
+            connection_established = false;
+
+            Events::Connection_lost event(connection->get_dead_reason());
+            post_event(event);
+        }
+
         process_received_packets();
     }
 }
