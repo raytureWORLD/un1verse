@@ -12,7 +12,8 @@ namespace Network {
         class Connection_manager:
             public Sync_event_emitter<
                 Events::Connect_result,
-                Events::Packet_received
+                Events::Packet_received,
+                Events::Connection_lost
             > 
         {
         public:
